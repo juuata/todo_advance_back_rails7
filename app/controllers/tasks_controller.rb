@@ -7,7 +7,7 @@ class TasksController < ApplicationController
   end
 
   def create
-    @result = Task.create(task_params)
+    Tasks::CreateService.new(params).call
     tasks_all
   end
 
@@ -26,10 +26,40 @@ class TasksController < ApplicationController
     tasks_all
   end
 
+  def duplicate
+    task = Task.find(params[:id])
+    result = Tasks::DuplicateService.new(task).call
+
+    if result.success?
+      render json: task_json(result.data), status: :created
+    else
+      render json: { errors: result.errors.full_messages }, status: :unprocessable_entity
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: 'Task not found' }, status: :not_found
+  end
+
   private
 
+  def task_json(task)
+    {
+      id: task.id,
+      name: task.name,
+      explanation: task.explanation,
+      status: task.status,
+      priority: task.priority,
+      genre_id: task.genre_id,
+      deadline_date: task.deadline_date,
+      created_at: task.created_at,
+      updated_at: task.updated_at
+    }
+  end
+
   def task_params
-    params.permit(:name, :explanation, :status).merge(genre_id: params[:genreId], deadline_date: params[:deadlineDate])
+    permitted = params.permit(:name, :explanation, :status, :priority)
+    permitted[:genre_id] = params[:genreId] if params[:genreId].present?
+    permitted[:deadline_date] = params[:deadlineDate] if params[:deadlineDate].present?
+    permitted
   end
 
   def select_task
@@ -37,7 +67,7 @@ class TasksController < ApplicationController
   end
 
   def tasks_all
-    @tasks = Task.all
+    @tasks = Task.includes(:genre).all
     render :all_tasks
   end
 end
