@@ -10,12 +10,13 @@
 #   https://dev.mysql.com/doc/refman/5.7/en/password-hashing.html
 #
 default: &default
-  adapter: mysql2
+  adapter: trilogy
   encoding: utf8mb4
   pool: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
-  username: root
+  username: rails_dev
   password:
-  socket: /tmp/mysql.sock
+  host: 127.0.0.1
+  port: 3306
 
 development:
   <<: *default
