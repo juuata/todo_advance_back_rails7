@@ -39,6 +39,19 @@ class TasksController < ApplicationController
     render json: { error: 'Task not found' }, status: :not_found
   end
 
+  def report
+    result = Tasks::ReportService.new.call
+    render json: {
+      totalCount: result.data[:total_count],
+      countByStatus: {
+        notStarted: result.data[:count_by_status][:not_started],
+        inProgress: result.data[:count_by_status][:in_progress],
+        completed: result.data[:count_by_status][:completed]
+      },
+      completionRate: result.data[:completion_rate]
+    }
+  end
+
   private
 
   def task_json(task)
